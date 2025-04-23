@@ -34,5 +34,7 @@ def predict():
         "roi_percent": round(roi, 2)
     })
 
-print("🚀 Running Flask on localhost:5000")
-app.run(debug=True)
+if __name__ == '__main__':
+    # ✅ Use 0.0.0.0 for production deployment
+    print("🚀 Running Flask on 0.0.0.0:5000")
+    app.run(host='0.0.0.0', port=5000)
