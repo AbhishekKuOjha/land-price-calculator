@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Land Investment ROI Calculator</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background-color: #fffdd0;
+      color: #1e3a5f;
+      font-family: sans-serif;
+    }
+
+    h2 {
+      text-align: center;
+      color: #002147; /* Dark Blue */
+    }
+
+    label {
+      color: #1e3a5f;
+      font-weight: bold;
+    }
+
+    input, button {
+      margin-bottom: 10px;
+      padding: 8px;
+      width: 100%;
+      max-width: 400px;
+      display: block;
+    }
+
+    button {
+      background-color: #f4a460;
+      color: white;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+    }
+
+    canvas {
+      margin-top: 30px;
+      background: white;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>ILLUSTRE SOFTWARE SERVICE</h2>
+  <div>
+    <label>Location</label>
+    <input id="location" placeholder="e.g., Pune, Delhi, Bangalore">
+    
+    <label>Year</label>
+    <input id="year" type="number" placeholder="e.g., 2025">
+    
+    <label>Price (₹/sq.ft.)</label>
+    <input id="investment" type="number" placeholder="e.g., 6000">
+    
+    <label>Area (sq.ft.)</label>
+    <input id="area" type="number" placeholder="e.g., 1000">
+    
+    <button onclick="predict()">Predict ROI</button>
+    <p id="result"></p>
+    <canvas id="priceChart" width="400" height="200"></canvas>
+  </div>
+
+  <script>
+    let chart = null;
+    async function predict() {
+      const location = document.getElementById('location').value;
+      const year = document.getElementById('year').value;
+      const investment = document.getElementById('investment').value;
+      const area = document.getElementById('area').value;
+
+      try {
+        const response = await fetch('http://127.0.0.1:5000/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ location, year, investment, area })
+        });
+
+        const result = await response.json();
+        if (result.predicted_price !== undefined) {
+          const totalInvestment = investment * area;
+          const roi = result.roi_percent;
+          const predicted = result.predicted_price;
+          document.getElementById('result').style.color = roi >= 0 ? "green" : "red";
+          document.getElementById('result').innerText =
+            `📈 Predicted Total Value: ₹${predicted.toLocaleString()} | ROI: ${roi}%`;
+          drawChart(totalInvestment, predicted);
+        } else {
+          document.getElementById('result').innerText = "❌ Error: " + result.error;
+        }
+      } catch (err) {
+        document.getElementById('result').innerText = "⚠ Could not connect to prediction server.";
+      }
+    }
+
+    function drawChart(investment, predicted) {
+      const ctx = document.getElementById('priceChart').getContext('2d');
+      if (chart) { chart.destroy(); }
+
+      chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Your Investment', 'Predicted Value'],
+          datasets: [{
+            label: '₹ Amount',
+            data: [investment, predicted],
+            backgroundColor: ['#f4a460', '#32cd32']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  return '₹' + ctx.raw.toLocaleString();
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(val) {
+                  return '₹' + val;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
