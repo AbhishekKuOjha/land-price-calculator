@@ -2,18 +2,21 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import joblib
 
-print("🔥 Flask app starting...")
-
 app = Flask(__name__)
 CORS(app)
 
+# Load the model and location mapping
 model = joblib.load("land_price_model.pkl")
 location_map = joblib.load("location_map.pkl")
-print("✅ Model and location map loaded")
+
+@app.route('/')
+def index():
+    return "🔥 Land Price ROI API is live!"
 
 @app.route('/predict', methods=['POST'])
 def predict():
     data = request.get_json()
+
     location = data.get("location")
     year = int(data.get("year"))
     investment_per_sqft = float(data.get("investment"))
@@ -35,6 +38,5 @@ def predict():
     })
 
 if __name__ == '__main__':
-    # ✅ Use 0.0.0.0 for production deployment
-    print("🚀 Running Flask on 0.0.0.0:5000")
+    print("✅ Starting Flask on 0.0.0.0:5000")
     app.run(host='0.0.0.0', port=5000)
